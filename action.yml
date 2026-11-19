@@ -1,0 +1,116 @@
+name: Conventional Commits release notes
+description: Compute the next semantic version from Conventional Commits and write Markdown release notes and CHANGELOG.md.
+author: Saizul Amin
+branding:
+  icon: file-text
+  color: blue
+
+inputs:
+  from:
+    description: Start after this ref. Default is the latest version tag.
+    required: false
+    default: ''
+  to:
+    description: End at this ref.
+    required: false
+    default: HEAD
+  write:
+    description: Set to "true" to prepend the notes to the changelog file.
+    required: false
+    default: 'false'
+  changelog:
+    description: Path of the changelog file, relative to working-directory.
+    required: false
+    default: CHANGELOG.md
+  prerelease:
+    description: Make a pre-release with this identifier, e.g. "beta" or "rc". Empty for a normal release.
+    required: false
+    default: ''
+  release-as:
+    description: Force "major", "minor", "patch" or an exact version.
+    required: false
+    default: ''
+  tag-prefix:
+    description: Prefix of version tags.
+    required: false
+    default: v
+  config:
+    description: Path to a configuration file. Default is .release-notes.json if it exists.
+    required: false
+    default: ''
+  path:
+    description: Only count commits that touch this path (for monorepos).
+    required: false
+    default: ''
+  include-merges:
+    description: Set to "true" to read headers from merge commit bodies (follows the first parent only).
+    required: false
+    default: 'false'
+  working-directory:
+    description: Directory of the git repository.
+    required: false
+    default: '.'
+
+outputs:
+  released:
+    description: '"true" if the commits call for a release, otherwise "false".'
+    value: ${{ steps.notes.outputs.released }}
+  version:
+    description: The next version without prefix, e.g. 1.3.0. Empty when there is no release.
+    value: ${{ steps.notes.outputs.version }}
+  tag:
+    description: The next tag, e.g. v1.3.0. Empty when there is no release.
+    value: ${{ steps.notes.outputs.tag }}
+  previous-version:
+    description: The version the release is based on.
+    value: ${{ steps.notes.outputs.previous-version }}
+  previous-tag:
+    description: The tag the range starts at.
+    value: ${{ steps.notes.outputs.previous-tag }}
+  release-type:
+    description: major, minor or patch. Empty when there is no release.
+    value: ${{ steps.notes.outputs.release-type }}
+  notes:
+    description: The Markdown release notes.
+    value: ${{ steps.notes.outputs.notes }}
+
+runs:
+  using: composite
+  steps:
+    - name: Build release-notes-gen
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: |
+        npm ci --no-audit --no-fund --ignore-scripts --loglevel=error
+        npm run build --silent
+
+    - name: Generate release notes
+      id: notes
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        INPUT_FROM: ${{ inputs.from }}
+        INPUT_TO: ${{ inputs.to }}
+        INPUT_WRITE: ${{ inputs.write }}
+        INPUT_CHANGELOG: ${{ inputs.changelog }}
+        INPUT_PRERELEASE: ${{ inputs.prerelease }}
+        INPUT_RELEASE_AS: ${{ inputs.release-as }}
+        INPUT_TAG_PREFIX: ${{ inputs.tag-prefix }}
+        INPUT_CONFIG: ${{ inputs.config }}
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_INCLUDE_MERGES: ${{ inputs.include-merges }}
+        INPUT_WORKING_DIRECTORY: ${{ inputs.working-directory }}
+      run: |
+        args=(--changelog "$INPUT_CHANGELOG" --tag-prefix "$INPUT_TAG_PREFIX" --github-output "$GITHUB_OUTPUT")
+        if [ -n "$INPUT_FROM" ]; then args+=(--from "$INPUT_FROM"); fi
+        if [ -n "$INPUT_TO" ] && [ "$INPUT_TO" != "HEAD" ]; then args+=(--to "$INPUT_TO"); fi
+        if [ -n "$INPUT_PRERELEASE" ]; then args+=(--prerelease "$INPUT_PRERELEASE"); fi
+        if [ -n "$INPUT_RELEASE_AS" ]; then args+=(--release-as "$INPUT_RELEASE_AS"); fi
+        if [ -n "$INPUT_CONFIG" ]; then args+=(--config "$INPUT_CONFIG"); fi
+        if [ -n "$INPUT_PATH" ]; then args+=(--path "$INPUT_PATH"); fi
+        if [ "$INPUT_WRITE" = "true" ]; then args+=(--write); fi
+        if [ "$INPUT_INCLUDE_MERGES" = "true" ]; then args+=(--include-merges); fi
+        if [ "$(git rev-parse --is-shallow-repository 2>/dev/null)" = "true" ]; then
+          echo "::warning::The repository is a shallow clone. Use actions/checkout with fetch-depth: 0 so tags and history are available."
+        fi
+        node "$GITHUB_ACTION_PATH/dist/esm/cli.js" "${args[@]}"

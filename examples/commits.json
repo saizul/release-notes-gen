@@ -1,0 +1,10 @@
+[
+  {
+    "hash": "9fceb02d0ae598e95dc970b74767f19372d61af8",
+    "message": "feat(engine)!: new fuel format\n\nBREAKING CHANGE: fuel files from 1.x must be converted with `rocket convert`.\n\nCloses #50"
+  },
+  { "hash": "e83c5163316f89bfbde7d9ab23ca2e25604af290", "message": "fix(ui): countdown skips 3 (#47)" },
+  { "hash": "2d3acf90f35989df8f262dc50beadc4ee3ae1560", "message": "perf: cache the launch plan" },
+  { "hash": "8f3a2b1c4d5e6f708192a3b4c5d6e7f8091a2b3c", "message": "docs: new launch guide" },
+  { "hash": "1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d", "message": "Update CONTRIBUTING.md" }
+]

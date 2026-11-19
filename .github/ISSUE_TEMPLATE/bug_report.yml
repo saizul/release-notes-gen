@@ -1,0 +1,40 @@
+name: Bug report
+description: A commit parsed wrongly, a wrong version, or broken notes
+labels: [bug]
+body:
+  - type: textarea
+    id: commits
+    attributes:
+      label: Commit messages
+      description: The full messages (git log --format=%B), with anything private removed.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: The command you ran and the output you got.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: release-notes-gen version
+      placeholder: '0.1.0'
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Node, git and OS versions (or "GitHub Action")
+      placeholder: 'Node 22.12, git 2.47, Ubuntu 24.04'
+    validations:
+      required: true

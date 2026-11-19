@@ -1,0 +1,109 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint and typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+
+  test:
+    name: Node ${{ matrix.node }} on ${{ matrix.os }}
+    needs: lint
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        node: [20, 22]
+        include:
+          - os: windows-latest
+            node: 22
+          - os: macos-latest
+            node: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Run the examples against the build
+        run: |
+          node examples/library.mjs
+          node examples/commonjs.cjs
+      - name: Smoke-test the CLI
+        shell: bash
+        run: |
+          node dist/esm/cli.js --version
+          node dist/esm/cli.js --input examples/commits.json --current 1.4.2 --config examples/release-notes.json --date 2026-11-19
+          printf 'abc1234 feat: one\ndef5678 fix: two\n' | node dist/esm/cli.js --input - --current 1.0.0 --version-only | grep -qx '1.1.0'
+          if node dist/esm/cli.js --no-such-option; then echo "expected a failure" && exit 1; fi
+      - name: Check the packed package
+        run: npm pack --dry-run
+
+  action:
+    name: Run the GitHub Action
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run on this repository
+        id: self
+        uses: ./
+        with:
+          release-as: patch
+      - name: Check the outputs
+        env:
+          RELEASED: ${{ steps.self.outputs.released }}
+          VERSION: ${{ steps.self.outputs.version }}
+          TAG: ${{ steps.self.outputs.tag }}
+          NOTES: ${{ steps.self.outputs.notes }}
+        run: |
+          echo "released=$RELEASED version=$VERSION tag=$TAG"
+          printf '%s\n' "$NOTES"
+          test "$RELEASED" = "true"
+          test "$TAG" = "v$VERSION"
+          case "$NOTES" in "## "*) ;; *) echo "notes do not start with a heading" && exit 1 ;; esac
+      - name: Create a scratch repository
+        run: |
+          mkdir "$RUNNER_TEMP/scratch"
+          cd "$RUNNER_TEMP/scratch"
+          git init -q
+          git config user.name "CI"
+          git config user.email "ci@example.com"
+          git commit -q --allow-empty -m "chore: initial commit"
+          git tag v1.2.0
+          git commit -q --allow-empty -m "feat(engine): add a second stage"
+          git commit -q --allow-empty -m "docs: not in the notes"
+      - name: Write a changelog in the scratch repository
+        id: scratch
+        uses: ./
+        with:
+          working-directory: ${{ runner.temp }}/scratch
+          write: 'true'
+      - name: Check the scratch changelog
+        env:
+          VERSION: ${{ steps.scratch.outputs.version }}
+        run: |
+          test "$VERSION" = "1.3.0"
+          grep -q '^## 1.3.0' "$RUNNER_TEMP/scratch/CHANGELOG.md"
+          grep -q 'second stage' "$RUNNER_TEMP/scratch/CHANGELOG.md"

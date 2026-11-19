@@ -1,0 +1,8 @@
+{
+  "sections": [
+    { "type": "feat", "title": "New features" },
+    { "type": ["fix", "perf"], "title": "Fixes and speed-ups" },
+    { "type": "docs", "title": "Documentation" }
+  ],
+  "otherTitle": "Other changes"
+}

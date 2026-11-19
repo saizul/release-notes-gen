@@ -1,0 +1,96 @@
+{
+  "name": "@saizul/release-notes-gen",
+  "version": "0.1.0",
+  "description": "Next semantic version and Markdown release notes from Conventional Commits: parses scopes, breaking changes, footers, reverts and merges, links commits, PRs and issues on GitHub and GitLab, updates CHANGELOG.md. CLI, library and GitHub Action. Zero dependencies.",
+  "keywords": [
+    "conventional-commits",
+    "changelog",
+    "release-notes",
+    "semver",
+    "semantic-release",
+    "release",
+    "git",
+    "github-action",
+    "gitlab",
+    "cli",
+    "typescript"
+  ],
+  "author": "Saizul Amin (https://github.com/saizul)",
+  "license": "MIT",
+  "homepage": "https://github.com/saizul/release-notes-gen#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/saizul/release-notes-gen.git"
+  },
+  "bugs": {
+    "url": "https://github.com/saizul/release-notes-gen/issues"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "type": "module",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "git": [
+        "./dist/esm/git.d.ts"
+      ]
+    }
+  },
+  "bin": {
+    "release-notes-gen": "./dist/esm/cli.js"
+  },
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
+    },
+    "./git": {
+      "import": {
+        "types": "./dist/esm/git.d.ts",
+        "default": "./dist/esm/git.js"
+      },
+      "require": {
+        "types": "./dist/cjs/git.d.ts",
+        "default": "./dist/cjs/git.js"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist/esm",
+    "dist/cjs",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "scripts": {
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "build": "npm run clean && tsc -p tsconfig.esm.json && tsc -p tsconfig.cjs.json && node scripts/write-cjs-package.mjs",
+    "build:test": "tsc -p tsconfig.test.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "biome lint src test scripts examples && npm run typecheck",
+    "format": "biome format --write src test scripts examples",
+    "format:check": "biome format src test scripts examples",
+    "test": "npm run build && npm run build:test && node scripts/run-tests.mjs",
+    "test:only": "node scripts/run-tests.mjs",
+    "prepublishOnly": "npm test"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.6.7",
+    "@types/node": "^20.19.0",
+    "typescript": "^5.7.0"
+  }
+}

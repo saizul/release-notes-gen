@@ -1,0 +1,48 @@
+# Copy to .github/workflows/release.yml. Run it from the Actions tab.
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      prerelease:
+        description: Pre-release identifier (empty for a normal release)
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: notes
+        uses: saizul/release-notes-gen@v0.1.0
+        with:
+          write: "true"
+          prerelease: ${{ inputs.prerelease }}
+
+      - name: Commit, tag and create the GitHub release
+        if: steps.notes.outputs.released == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.notes.outputs.tag }}
+          NOTES: ${{ steps.notes.outputs.notes }}
+          PRERELEASE: ${{ inputs.prerelease }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "chore(release): $TAG"
+          git tag "$TAG"
+          git push --follow-tags
+          flags=()
+          if [ -n "$PRERELEASE" ]; then flags+=(--prerelease); fi
+          gh release create "$TAG" --title "$TAG" --notes "$NOTES" "${flags[@]}"
+
+      - name: Nothing to release
+        if: steps.notes.outputs.released != 'true'
+        run: echo "No feature, fix or breaking change since ${{ steps.notes.outputs.previous-tag }}."
