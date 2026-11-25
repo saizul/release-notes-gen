@@ -58,10 +58,16 @@ function byScope(a: Commit, b: Commit): number {
   return a.scope.localeCompare(b.scope, 'en');
 }
 
-/** Sorts filtered commits into the breaking section and the configured sections. */
+/**
+ * Sorts filtered commits into the breaking section and the configured sections.
+ * Commits with a scope in `config.excludeScopes` only appear under breaking changes.
+ */
 export function groupCommits(commits: Commit[], config: Config): GroupedCommits {
-  const filtered = filterCommits(commits);
-  const breaking = filtered.filter((c) => c.breaking).sort(byScope);
+  const all = filterCommits(commits);
+  const breaking = all.filter((c) => c.breaking).sort(byScope);
+  const excluded = new Set((config.excludeScopes ?? []).map((s) => s.toLowerCase()));
+  const filtered =
+    excluded.size === 0 ? all : all.filter((c) => c.scope === null || !excluded.has(c.scope.toLowerCase()));
   const groups: Group[] = [];
   const placed = new Set<Commit>();
 

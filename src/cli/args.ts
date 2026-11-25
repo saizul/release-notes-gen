@@ -20,6 +20,7 @@ export interface CliOptions {
   changelog?: string;
   githubOutput?: string;
   paths: string[];
+  excludeScopes: string[];
   write: boolean;
   json: boolean;
   versionOnly: boolean;
@@ -62,6 +63,7 @@ const BOOL_FLAGS: Record<string, keyof CliOptions> = {
 export function parseArgs(argv: string[]): CliOptions {
   const o: CliOptions = {
     paths: [],
+    excludeScopes: [],
     noDate: false,
     write: false,
     json: false,
@@ -94,6 +96,19 @@ export function parseArgs(argv: string[]): CliOptions {
       const value = inline ?? argv[++i];
       if (value === undefined || value === '') throw new UsageError('--path needs a value');
       o.paths.push(value);
+      continue;
+    }
+    if (name === '--exclude-scope') {
+      const value = inline ?? argv[++i];
+      if (value === undefined || value === '' || (inline === undefined && value.startsWith('-'))) {
+        throw new UsageError('--exclude-scope needs a value');
+      }
+      o.excludeScopes.push(
+        ...value
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean),
+      );
       continue;
     }
     const valueKey = VALUE_FLAGS[name];
@@ -155,6 +170,9 @@ Links and grouping:
   --host <name>          github, gitlab or none (default: detected)
   --include-merges       Read headers from merge commit bodies (first parent only)
   --show-authors         Credit authors after each entry
+  --exclude-scope <s>    Leave commits with this scope out of the notes
+                         (repeatable or comma-separated; breaking changes
+                         still show)
   --config <file>        Configuration file (default: .release-notes.json if present)
 
   -h, --help             Show this help

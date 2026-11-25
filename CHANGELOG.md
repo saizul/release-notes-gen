@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `excludeScopes` configuration key and `--exclude-scope` option: leave commits with the given
+  scopes (for example `deps-dev`) out of the notes. Breaking changes from those scopes still show
+  and every commit still counts for the version bump.
+
 ## [0.1.0] - 2026-11-19
 
 ### Added

@@ -31,6 +31,17 @@ describe('resolveConfig', () => {
     assert.equal(c.preMajor, false);
   });
 
+  it('lower-cases excludeScopes and rejects bad lists', () => {
+    assert.deepEqual(resolveConfig().excludeScopes, []);
+    assert.deepEqual(resolveConfig({ excludeScopes: ['Deps-Dev', 'release'] }).excludeScopes, [
+      'deps-dev',
+      'release',
+    ]);
+    for (const value of ['deps', [''], [1], null]) {
+      assert.throws(() => resolveConfig({ excludeScopes: value }), /"excludeScopes" must be a list/);
+    }
+  });
+
   it('rejects bad values with a clear message', () => {
     const bad: [unknown, RegExp][] = [
       [[], /must be an object/],

@@ -49,6 +49,9 @@ function loadConfig(o: CliOptions, cwd: string): Config {
   if (o.host !== undefined) config.host = o.host as Config['host'];
   if (o.includeMerges) config.includeMerges = true;
   if (o.showAuthors) config.showAuthors = true;
+  if (o.excludeScopes.length > 0) {
+    config.excludeScopes = [...config.excludeScopes, ...o.excludeScopes.map((s) => s.toLowerCase())];
+  }
   return config;
 }
 

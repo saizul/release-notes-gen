@@ -21,6 +21,8 @@ describe('cli basics', () => {
       ['--json', '--version-only'],
       ['--write=yes'],
       ['--path'],
+      ['--exclude-scope'],
+      ['--exclude-scope', '--json'],
     ]) {
       const r = await cli(args);
       assert.equal(r.code, 2, args.join(' '));
@@ -51,6 +53,26 @@ describe('cli basics', () => {
         '',
       ].join('\n'),
     );
+  });
+
+  it('--exclude-scope drops scopes from the notes', async () => {
+    const stdin = 'abc1234 feat: one\ndef5678 fix(deps-dev): bump a linter\n9abcdef fix(Release): tidy\n';
+    const r = await cli(
+      [
+        '--input',
+        '-',
+        '--current',
+        '1.2.0',
+        '--host',
+        'none',
+        '--no-date',
+        '--exclude-scope',
+        'deps-dev,release',
+      ],
+      { stdin },
+    );
+    assert.equal(r.code, 0, r.stderr);
+    assert.equal(r.stdout, ['## 1.3.0', '', '### Features', '', '- one (abc1234)', ''].join('\n'));
   });
 
   it('stdin with --from as the current version, --version-only and --json', async () => {
