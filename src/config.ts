@@ -43,6 +43,7 @@ export function defaultConfig(): Config {
     preMajor: true,
     includeMerges: false,
     otherTitle: null,
+    excludeScopes: [],
     showAuthors: false,
     changelogHeader: DEFAULT_CHANGELOG_HEADER,
   };
@@ -118,6 +119,12 @@ export function resolveConfig(input: unknown = {}): Config {
       if (typeof o[key] !== 'boolean') throw new ConfigError(`"${key}" must be true or false`);
       config[key] = o[key];
     }
+  }
+  if (o.excludeScopes !== undefined) {
+    if (!Array.isArray(o.excludeScopes) || !o.excludeScopes.every((s) => typeof s === 'string' && s !== '')) {
+      throw new ConfigError('"excludeScopes" must be a list of scope names');
+    }
+    config.excludeScopes = o.excludeScopes.map((s: string) => s.toLowerCase());
   }
   if (o.host !== undefined) {
     if (o.host !== null && !HOSTS.has(String(o.host))) {

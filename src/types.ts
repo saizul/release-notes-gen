@@ -98,6 +98,12 @@ export interface Config {
   includeMerges: boolean;
   /** Put commits that are not Conventional Commits under this title (`null` hides them). */
   otherTitle: string | null;
+  /**
+   * Scopes whose commits are left out of the notes sections, e.g. `["deps-dev", "release"]`.
+   * Matched case-insensitively. Breaking changes still show and every commit still counts
+   * for the version bump.
+   */
+  excludeScopes: string[];
   /** Add `by @author`-style credit (`author` field) after each entry. */
   showAuthors: boolean;
   /** Text written at the top of a new changelog file. */

@@ -151,6 +151,7 @@ release-notes-gen [options] [-- <path>...]
 | `--host <name>` | `github`, `gitlab` or `none` (default: detected from the URL) |
 | `--include-merges` | Read headers from merge commit bodies, following first parents only |
 | `--show-authors` | Credit the author after each entry |
+| `--exclude-scope <scope>` | Leave commits with this scope out of the notes; repeatable or comma-separated (added to `excludeScopes`) |
 | `--config <file>` | Configuration file (default `.release-notes.json` if it exists) |
 | `--help`, `-h` / `--version`, `-v` | Help and version |
 
@@ -254,6 +255,7 @@ Put a `.release-notes.json` next to your `.git` folder (or pass
   "preMajor": true,
   "includeMerges": false,
   "otherTitle": "Other changes",
+  "excludeScopes": ["deps-dev", "release"],
   "showAuthors": false,
   "changelogHeader": "# Changelog"
 }
@@ -270,6 +272,7 @@ Put a `.release-notes.json` next to your `.git` folder (or pass
 | `preMajor` | `true` | On `0.x`, breaking changes bump the minor version |
 | `includeMerges` | `false` | Use the Conventional Commits header in merge commit bodies (for merge-commit workflows); reads `git log --first-parent` |
 | `otherTitle` | `null` | Show commits that are not Conventional Commits under this title |
+| `excludeScopes` | `[]` | Scopes left out of the notes sections (case-insensitive), e.g. dev-dependency bumps. Breaking changes still show, and the commits still count for the version bump |
 | `showAuthors` | `false` | Add `, by Author` to each entry |
 | `changelogHeader` | `# Changelog` and a short intro | Text at the top of a new changelog |
 

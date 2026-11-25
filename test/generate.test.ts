@@ -251,6 +251,35 @@ describe('generate', () => {
     );
   });
 
+  it('excludeScopes hides entries but keeps breaking changes and the bump', () => {
+    const release = generate({
+      ...base,
+      date: null,
+      config: { excludeScopes: ['deps-dev'] },
+      commits: [
+        { hash: H(1), message: 'fix: real bug' },
+        { hash: H(2), message: 'fix(DEPS-DEV): bump the test runner' },
+        { hash: H(3), message: 'feat(deps-dev)!: require Node 22 to develop' },
+      ],
+    });
+    assert.equal(release.version, '2.0.0');
+    assert.equal(
+      release.notes,
+      [
+        '## 2.0.0',
+        '',
+        '### BREAKING CHANGES',
+        '',
+        '- **deps-dev:** require Node 22 to develop (0000003)',
+        '',
+        '### Bug Fixes',
+        '',
+        '- real bug (0000001)',
+        '',
+      ].join('\n'),
+    );
+  });
+
   it('a custom tag prefix', () => {
     const release = generate({
       currentVersion: 'release-1.0.0',
